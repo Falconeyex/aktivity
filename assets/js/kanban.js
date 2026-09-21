@@ -186,15 +186,15 @@ const kanban = {
             <div class="card-body ql-snow"><div class="ql-editor"></div></div>
             <div class="card-meta">
                 <div class="card-sub"></div>
-                <label class="card-move">
-                    <select class="card-move-select" aria-label="${t('moveTo')}"></select>
-                </label>
             </div>
             <div class="card-actions">
                 <button type="button" class="icon-btn" data-act="edit">${t('edit')}</button>
                 <button type="button" class="icon-btn" data-act="history">${t('history')}</button>
                 <button type="button" class="icon-btn" data-act="ai">${t('addToChat')}</button>
                 <button type="button" class="icon-btn" data-act="delete">${t('recycle')}</button>
+                <label class="card-move">
+                    <select class="card-move-select" aria-label="${t('moveTo')}"></select>
+                </label>
             </div>
         `;
         el.querySelector('.card-title').textContent = card.title;

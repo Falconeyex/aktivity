@@ -28,20 +28,22 @@ $lang = $settings['language'] === 'cs' ? 'cs' : 'en';
         <section class="auth-card">
             <h1>AKTIVITY</h1>
             <p class="lead" data-i18n="pwHint">Min. 8 characters, with uppercase, lowercase, number, and symbol.</p>
-            <div class="tabs">
-                <button type="button" class="btn active" data-auth-tab="login" data-i18n="login">Sign in</button>
-                <button type="button" class="btn" data-auth-tab="register" data-i18n="register">Create account</button>
-            </div>
             <form id="form-login" data-auth-panel="login">
                 <label class="field"><span data-i18n="email">Email</span><input type="email" name="email" required autocomplete="username"></label>
                 <label class="field"><span data-i18n="password">Password</span><input type="password" name="password" required autocomplete="current-password"></label>
                 <button type="submit" class="btn btn-primary" data-i18n="login">Sign in</button>
-                <p><button type="button" class="btn btn-ghost" data-auth-tab="reset" data-i18n="forgot">Forgot password?</button></p>
+                <p class="auth-links">
+                    <button type="button" class="btn btn-ghost" data-auth-tab="register" data-i18n="register">Create account</button>
+                    <button type="button" class="btn btn-ghost" data-auth-tab="reset" data-i18n="forgot">Forgot password?</button>
+                </p>
             </form>
             <form id="form-register" class="hidden" data-auth-panel="register">
                 <label class="field"><span data-i18n="email">Email</span><input type="email" name="email" required autocomplete="username"></label>
                 <label class="field"><span data-i18n="password">Password</span><input type="password" name="password" required autocomplete="new-password"></label>
                 <button type="submit" class="btn btn-primary" data-i18n="register">Create account</button>
+                <p class="auth-links">
+                    <button type="button" class="btn btn-ghost" data-auth-tab="login" data-i18n="backToLogin">Back to sign in</button>
+                </p>
             </form>
             <form id="form-reset-request" class="hidden" data-auth-panel="reset">
                 <label class="field"><span data-i18n="email">Email</span><input type="email" name="email" required></label>
