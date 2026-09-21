@@ -60,6 +60,7 @@ $lang = $settings['language'] === 'cs' ? 'cs' : 'en';
             <div class="export-actions export-actions-bar">
                 <button type="button" class="btn btn-export-all" data-i18n="exportAll">Export all</button>
                 <button type="button" class="btn btn-export-selected" data-i18n="exportSelected">Export selected</button>
+                <button type="button" class="btn btn-reminders" data-i18n="reminders">Reminders</button>
             </div>
             <button type="button" class="nav-toggle" id="btn-menu" data-i18n="menu">Menu</button>
             <div class="header-spacer"></div>
@@ -67,6 +68,7 @@ $lang = $settings['language'] === 'cs' ? 'cs' : 'en';
                 <div class="export-actions export-actions-menu">
                     <button type="button" class="btn btn-export-all" data-i18n="exportAll">Export all</button>
                     <button type="button" class="btn btn-export-selected" data-i18n="exportSelected">Export selected</button>
+                    <button type="button" class="btn btn-reminders" data-i18n="reminders">Reminders</button>
                 </div>
                 <button type="button" class="btn" id="btn-board" data-i18n="board">Board</button>
                 <button type="button" class="btn" id="btn-recycle" data-i18n="recycle">Recycle bin</button>
@@ -157,6 +159,35 @@ $lang = $settings['language'] === 'cs' ? 'cs' : 'en';
             <div class="modal-foot">
                 <button type="button" class="btn btn-primary" id="export-confirm" data-i18n="export">Export</button>
             </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-reminder">
+        <div class="modal" role="dialog" aria-modal="true">
+            <div class="modal-head">
+                <h2 data-i18n="addReminder">Add reminder</h2>
+                <button type="button" class="icon-btn" id="reminder-cancel" data-i18n="close">Close</button>
+            </div>
+            <div class="modal-body">
+                <label class="field">
+                    <span data-i18n="reminderWhen">Date and time</span>
+                    <input id="reminder-when" type="datetime-local">
+                </label>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-ghost" id="reminder-clear" data-i18n="reminderClear">Clear reminder</button>
+                <button type="button" class="btn btn-primary" id="reminder-save" data-i18n="reminderSave">Save reminder</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="modal-reminders">
+        <div class="modal" role="dialog" aria-modal="true">
+            <div class="modal-head">
+                <h2 data-i18n="reminders">Reminders</h2>
+                <button type="button" class="icon-btn" id="reminders-close" data-i18n="close">Close</button>
+            </div>
+            <div class="modal-body" id="reminders-list"></div>
         </div>
     </div>
 <?php endif; ?>

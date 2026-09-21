@@ -8,7 +8,7 @@ function ai_messages(): array
         $_SESSION['ai_messages'] = [
             [
                 'role' => 'system',
-                'content' => 'You are an assistant helping the user manage a Kanban board. Use the supplied card context when relevant. Reply in the same language the user writes in.',
+                'content' => 'You are an assistant helping the user manage a Kanban board. Use the supplied card context, including any reminder date and time and whether it is overdue, when relevant. Reply in the same language the user writes in.',
             ],
         ];
     }
@@ -43,6 +43,7 @@ function ai_attach_cards(array $cards): array
         $attached[] = [
             'id' => $id,
             'title' => (string) ($card['title'] ?? ''),
+            'remind_at' => $card['remind_at'] ?? null,
         ];
         $known[$id] = true;
     }
@@ -85,6 +86,14 @@ function format_card_context(array $card, array $history): string
     $lines[] = 'Title: ' . (string) $card['title'];
     $lines[] = 'Column: ' . (string) $card['status_column'];
     $lines[] = 'Created: ' . (string) $card['created_at'];
+    $remind = trim((string) ($card['remind_at'] ?? ''));
+    if ($remind !== '') {
+        $ts = strtotime($remind);
+        $state = ($ts !== false && $ts < time()) ? 'overdue' : 'upcoming';
+        $lines[] = 'Reminder: ' . $remind . ' (' . $state . ')';
+    } else {
+        $lines[] = 'Reminder: (none)';
+    }
     $lines[] = 'Body:';
     $lines[] = trim(html_entity_decode(strip_tags((string) $card['body']))) ?: '(empty)';
     $lines[] = 'History:';

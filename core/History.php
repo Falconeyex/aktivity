@@ -17,6 +17,7 @@ final class History
             'order_index' => isset($card['order_index']) ? (int) $card['order_index'] : 0,
             'created_at' => $card['created_at'] ?? null,
             'deleted_at' => $card['deleted_at'] ?? null,
+            'remind_at' => $card['remind_at'] ?? null,
         ];
     }
 

@@ -574,13 +574,67 @@ a {
     cursor: pointer;
 }
 
+.card-reminder {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    min-height: 27px;
+    padding: 0 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    font-size: 0.5625rem;
+    font-weight: 650;
+    text-align: left;
+    cursor: pointer;
+}
+
+.card-reminder.unset {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.card-reminder.upcoming,
+.reminder-item.upcoming {
+    color: var(--ok);
+}
+
+.card-reminder.overdue,
+.reminder-item.overdue {
+    color: var(--danger);
+}
+
+.reminder-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    text-align: left;
+    cursor: pointer;
+}
+
+.reminder-item strong {
+    color: var(--text);
+}
+
+.reminder-item span {
+    font-size: 0.85rem;
+    font-weight: 650;
+}
+
 .card-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-start;
     gap: 4px;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .card-actions .icon-btn {
@@ -614,6 +668,12 @@ a {
         line-height: 29px;
         background-position: right 8px center;
         background-size: 9px 6px;
+    }
+
+    .card-reminder {
+        min-height: 31px;
+        padding: 0 10px;
+        font-size: 0.647rem;
     }
 }
 
@@ -715,6 +775,14 @@ a {
 
 .ai-msg.ai-card-chip {
     font-weight: 650;
+}
+
+.ai-msg.ai-card-chip.upcoming {
+    color: var(--ok);
+}
+
+.ai-msg.ai-card-chip.overdue {
+    color: var(--danger);
 }
 
 .ai-compose input {
@@ -878,7 +946,46 @@ a {
     border-radius: 10px;
     padding: 8px 10px;
     background: var(--surface-2);
+    color: var(--text);
     width: 100%;
+}
+
+#reminder-when {
+    color-scheme: light;
+    background: #ffffff;
+    color: #152033;
+    caret-color: #152033;
+}
+
+[data-theme="dark"] #reminder-when {
+    color-scheme: dark;
+    background: #0f1724;
+    color: #f3f7ff;
+    caret-color: #f3f7ff;
+    border-color: #4b5d75;
+}
+
+#reminder-when::-webkit-datetime-edit,
+#reminder-when::-webkit-datetime-edit-fields-wrapper,
+#reminder-when::-webkit-datetime-edit-text,
+#reminder-when::-webkit-datetime-edit-year-field,
+#reminder-when::-webkit-datetime-edit-month-field,
+#reminder-when::-webkit-datetime-edit-day-field,
+#reminder-when::-webkit-datetime-edit-hour-field,
+#reminder-when::-webkit-datetime-edit-minute-field,
+#reminder-when::-webkit-datetime-edit-ampm-field {
+    color: inherit;
+    background: transparent;
+}
+
+#reminder-when::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.85;
+    filter: none;
+}
+
+[data-theme="dark"] #reminder-when::-webkit-calendar-picker-indicator {
+    filter: invert(1);
 }
 
 .ql-toolbar.ql-snow,

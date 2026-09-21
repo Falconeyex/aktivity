@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('board')) {
             kanban.renderBoard();
             kanban.renderColumnPanel();
+            kanban.renderRemindersList();
             if (kanban.view === 'recycle') kanban.renderBin();
         }
         try {

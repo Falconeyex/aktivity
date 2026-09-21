@@ -47,7 +47,13 @@ const aiChat = {
         cards.forEach((card) => {
             const el = document.createElement('div');
             el.className = 'ai-msg user ai-card-chip';
-            el.textContent = card.title || '';
+            const remind = this.formatChipReminder(card.remind_at);
+            el.textContent = remind
+                ? `${card.title || ''} · ${t('remindAt')} ${remind.label}`
+                : (card.title || '');
+            if (remind) {
+                el.classList.add(remind.overdue ? 'overdue' : 'upcoming');
+            }
             parts.push(el.outerHTML);
         });
         if (!visible.length && !cards.length) {
@@ -61,6 +67,18 @@ const aiChat = {
         });
         box.innerHTML = parts.join('');
         box.scrollTop = box.scrollHeight;
+    },
+
+    formatChipReminder(value) {
+        if (!value) return null;
+        const raw = String(value).trim();
+        const date = new Date(raw.includes('T') ? raw : raw.replace(' ', 'T'));
+        if (Number.isNaN(date.getTime())) return null;
+        const pad = (n) => String(n).padStart(2, '0');
+        return {
+            label: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`,
+            overdue: date.getTime() < Date.now(),
+        };
     },
 
     async send() {

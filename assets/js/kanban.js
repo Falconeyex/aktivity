@@ -6,6 +6,7 @@ const kanban = {
     selected: new Set(),
     view: 'board',
     editor: null,
+    reminderCard: null,
     quill: null,
     sortables: [],
 
@@ -31,6 +32,13 @@ const kanban = {
         document.getElementById('editor-save')?.addEventListener('click', () => this.saveEditor());
         document.getElementById('editor-cancel')?.addEventListener('click', () => this.closeModal('modal-editor'));
         document.getElementById('history-close')?.addEventListener('click', () => this.closeModal('modal-history'));
+        document.querySelectorAll('.btn-reminders').forEach((btn) => {
+            btn.addEventListener('click', () => this.openReminders());
+        });
+        document.getElementById('reminders-close')?.addEventListener('click', () => this.closeModal('modal-reminders'));
+        document.getElementById('reminder-cancel')?.addEventListener('click', () => this.closeModal('modal-reminder'));
+        document.getElementById('reminder-save')?.addEventListener('click', () => this.saveReminder(false));
+        document.getElementById('reminder-clear')?.addEventListener('click', () => this.saveReminder(true));
     },
 
     setView(view) {
@@ -187,6 +195,7 @@ const kanban = {
             <div class="card-meta">
                 <div class="card-sub"></div>
             </div>
+            <button type="button" class="card-reminder ${this.reminderClass(card.remind_at)}" data-act="reminder">${this.reminderCaption(card.remind_at)}</button>
             <div class="card-actions">
                 <button type="button" class="icon-btn" data-act="edit">${t('edit')}</button>
                 <button type="button" class="icon-btn" data-act="history">${t('history')}</button>
@@ -234,6 +243,10 @@ const kanban = {
         el.querySelector('[data-act="delete"]').addEventListener('click', (e) => {
             e.stopPropagation();
             this.remove(card.id);
+        });
+        el.querySelector('[data-act="reminder"]').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openReminder(card);
         });
         el.addEventListener('dblclick', () => this.openEditor(card));
         return el;
@@ -331,6 +344,109 @@ const kanban = {
 
     closeModal(id) {
         document.getElementById(id)?.classList.remove('open');
+    },
+
+    parseRemindAt(value) {
+        if (!value) return null;
+        const raw = String(value).trim();
+        const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+        const date = new Date(normalized);
+        return Number.isNaN(date.getTime()) ? null : date;
+    },
+
+    reminderOverdue(value) {
+        const date = this.parseRemindAt(value);
+        return !!(date && date.getTime() < Date.now());
+    },
+
+    reminderClass(value) {
+        if (!this.parseRemindAt(value)) return 'unset';
+        return this.reminderOverdue(value) ? 'overdue' : 'upcoming';
+    },
+
+    formatRemindAt(value) {
+        const date = this.parseRemindAt(value);
+        if (!date) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    },
+
+    toDateTimeLocal(value) {
+        const date = this.parseRemindAt(value);
+        if (!date) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    },
+
+    reminderCaption(value) {
+        if (!this.parseRemindAt(value)) return t('addReminder');
+        return `${t('remindAt')} ${this.formatRemindAt(value)}`;
+    },
+
+    openReminder(card) {
+        this.reminderCard = card;
+        const input = document.getElementById('reminder-when');
+        if (input) input.value = this.toDateTimeLocal(card.remind_at);
+        const clear = document.getElementById('reminder-clear');
+        if (clear) clear.classList.toggle('hidden', !this.parseRemindAt(card.remind_at));
+        document.getElementById('modal-reminder')?.classList.add('open');
+        input?.focus();
+    },
+
+    async saveReminder(clear) {
+        if (!this.reminderCard?.id) return;
+        const input = document.getElementById('reminder-when');
+        const value = clear ? null : (input?.value || '').trim();
+        if (!clear && !value) {
+            toast.error(t('reminderRequired'));
+            return;
+        }
+        const data = await api.post('cards_reminder.php', {
+            id: this.reminderCard.id,
+            remind_at: value,
+        });
+        const next = data.card;
+        this.cards = this.cards.map((card) => (
+            Number(card.id) === Number(next.id) ? next : card
+        ));
+        toast.ok(t('saved'));
+        this.closeModal('modal-reminder');
+        this.renderBoard();
+        this.renderRemindersList();
+    },
+
+    openReminders() {
+        this.renderRemindersList();
+        document.getElementById('modal-reminders')?.classList.add('open');
+    },
+
+    renderRemindersList() {
+        const box = document.getElementById('reminders-list');
+        if (!box) return;
+        const items = this.cards
+            .filter((card) => this.parseRemindAt(card.remind_at))
+            .sort((a, b) => this.parseRemindAt(a.remind_at) - this.parseRemindAt(b.remind_at));
+        if (!items.length) {
+            box.innerHTML = `<p>${t('reminderEmpty')}</p>`;
+            return;
+        }
+        box.innerHTML = '';
+        items.forEach((card) => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = `reminder-item ${this.reminderClass(card.remind_at)}`;
+            const title = document.createElement('strong');
+            title.textContent = card.title;
+            const when = document.createElement('span');
+            when.textContent = `${t('remindAt')} ${this.formatRemindAt(card.remind_at)}`;
+            row.appendChild(title);
+            row.appendChild(when);
+            row.addEventListener('click', () => {
+                this.closeModal('modal-reminders');
+                this.openReminder(card);
+            });
+            box.appendChild(row);
+        });
     },
 
     async saveEditor() {

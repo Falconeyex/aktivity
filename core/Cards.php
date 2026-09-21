@@ -4,29 +4,20 @@ declare(strict_types=1);
 
 final class Cards
 {
+    private const COLS = 'id, user_id, title, body, status_column, order_index, created_at, deleted_at';
+
     public static function list(int $userId, bool $deleted): array
     {
-        $sql = $deleted
-            ? 'SELECT id, user_id, title, body, status_column, order_index, created_at, deleted_at
-               FROM cards WHERE user_id = ? AND deleted_at IS NOT NULL
-               ORDER BY deleted_at DESC, id DESC'
-            : 'SELECT id, user_id, title, body, status_column, order_index, created_at, deleted_at
-               FROM cards WHERE user_id = ? AND deleted_at IS NULL
-               ORDER BY status_column ASC, order_index ASC, id ASC';
-        $stmt = Database::pdo()->prepare($sql);
-        $stmt->execute([$userId]);
-        return $stmt->fetchAll();
+        $tail = $deleted
+            ? 'WHERE user_id = ? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC, id DESC'
+            : 'WHERE user_id = ? AND deleted_at IS NULL ORDER BY status_column ASC, order_index ASC, id ASC';
+        return self::rows($tail, [$userId]);
     }
 
     public static function getOwned(int $userId, int $cardId): ?array
     {
-        $stmt = Database::pdo()->prepare(
-            'SELECT id, user_id, title, body, status_column, order_index, created_at, deleted_at
-             FROM cards WHERE id = ? AND user_id = ? LIMIT 1'
-        );
-        $stmt->execute([$cardId, $userId]);
-        $row = $stmt->fetch();
-        return $row ?: null;
+        $rows = self::rows('WHERE id = ? AND user_id = ? LIMIT 1', [$cardId, $userId]);
+        return $rows[0] ?? null;
     }
 
     public static function nextIndex(int $userId, string $column): int
@@ -59,6 +50,17 @@ final class Cards
             'UPDATE cards SET title = ?, body = ? WHERE id = ? AND user_id = ? AND deleted_at IS NULL'
         );
         $stmt->execute([$title, $body, (int) $card['id'], (int) $card['user_id']]);
+        $next = self::getOwned((int) $card['user_id'], (int) $card['id']);
+        History::log((int) $card['id'], 'updated', $card, $next);
+        return $next;
+    }
+
+    public static function setReminder(array $card, ?string $remindAt): array
+    {
+        $stmt = Database::pdo()->prepare(
+            'UPDATE cards SET remind_at = ? WHERE id = ? AND user_id = ? AND deleted_at IS NULL'
+        );
+        $stmt->execute([$remindAt, (int) $card['id'], (int) $card['user_id']]);
         $next = self::getOwned((int) $card['user_id'], (int) $card['id']);
         History::log((int) $card['id'], 'updated', $card, $next);
         return $next;
@@ -145,5 +147,23 @@ final class Cards
             $row['new_state'] = $row['new_state'] !== null ? json_decode((string) $row['new_state'], true) : null;
         }
         return $rows;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function rows(string $sqlTail, array $params): array
+    {
+        try {
+            $stmt = Database::pdo()->prepare('SELECT ' . self::COLS . ', remind_at FROM cards ' . $sqlTail);
+            $stmt->execute($params);
+            return $stmt->fetchAll() ?: [];
+        } catch (PDOException $e) {
+            $stmt = Database::pdo()->prepare('SELECT ' . self::COLS . ' FROM cards ' . $sqlTail);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll() ?: [];
+            foreach ($rows as &$row) {
+                $row['remind_at'] = null;
+            }
+            return $rows;
+        }
     }
 }

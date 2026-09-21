@@ -87,7 +87,7 @@ You can run the same `composer install` locally if you want those libraries whil
 
 1. Create a MariaDB database and user in Active24.
 2. Import [sql/schema.sql](sql/schema.sql) only. Do not run any legacy schema.
-3. If the database already exists from an earlier AKTIVITY install, also run [sql/migrate_hidden_columns.sql](sql/migrate_hidden_columns.sql) once so column visibility can be saved.
+3. If the database already exists from an earlier AKTIVITY install, also run [sql/migrate_hidden_columns.sql](sql/migrate_hidden_columns.sql) and [sql/migrate_remind_at.sql](sql/migrate_remind_at.sql) once.
 4. Open `https://www.microview.cz/aktivity/seed.php` once. It creates:
 
    - user `falconeyex@gmail.com`

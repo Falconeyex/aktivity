@@ -41,6 +41,7 @@ CREATE TABLE cards (
     order_index INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at DATETIME NULL DEFAULT NULL,
+    remind_at DATETIME NULL DEFAULT NULL,
     PRIMARY KEY (id),
     KEY idx_cards_board (user_id, deleted_at, status_column, order_index),
     CONSTRAINT fk_cards_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE

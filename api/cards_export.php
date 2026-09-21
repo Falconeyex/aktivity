@@ -39,4 +39,9 @@ if (!$all) {
 
 $settings = Auth::settings((int) $user['id']);
 $lang = ($settings['language'] ?? 'en') === 'cs' ? 'cs' : 'en';
-Export::download(Export::build($cards, $format, $lang));
+$file = Export::build($cards, $format, $lang);
+json_ok([
+    'filename' => $file['filename'],
+    'mime' => $file['mime'],
+    'content' => base64_encode($file['body']),
+]);
