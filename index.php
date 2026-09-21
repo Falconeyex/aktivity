@@ -57,9 +57,17 @@ $lang = $settings['language'] === 'cs' ? 'cs' : 'en';
     <div class="app">
         <header class="header">
             <div class="brand"><span class="brand-mark">A</span> AKTIVITY</div>
+            <div class="export-actions export-actions-bar">
+                <button type="button" class="btn btn-export-all" data-i18n="exportAll">Export all</button>
+                <button type="button" class="btn btn-export-selected" data-i18n="exportSelected">Export selected</button>
+            </div>
             <button type="button" class="nav-toggle" id="btn-menu" data-i18n="menu">Menu</button>
             <div class="header-spacer"></div>
             <nav class="nav-actions">
+                <div class="export-actions export-actions-menu">
+                    <button type="button" class="btn btn-export-all" data-i18n="exportAll">Export all</button>
+                    <button type="button" class="btn btn-export-selected" data-i18n="exportSelected">Export selected</button>
+                </div>
                 <button type="button" class="btn" id="btn-board" data-i18n="board">Board</button>
                 <button type="button" class="btn" id="btn-recycle" data-i18n="recycle">Recycle bin</button>
                 <div class="columns-menu">
@@ -130,6 +138,27 @@ $lang = $settings['language'] === 'cs' ? 'cs' : 'en';
             <div class="modal-body" id="history-list"></div>
         </div>
     </div>
+
+    <div class="modal-backdrop" id="modal-export">
+        <div class="modal" role="dialog" aria-modal="true">
+            <div class="modal-head">
+                <h2 data-i18n="export">Export</h2>
+                <button type="button" class="icon-btn" id="export-cancel" data-i18n="close">Close</button>
+            </div>
+            <div class="modal-body">
+                <p class="export-format-hint" data-i18n="exportFormat">Choose export format</p>
+                <div class="export-formats">
+                    <label><input type="radio" name="export-format" value="json" checked> <span data-i18n="exportJson">JSON</span></label>
+                    <label><input type="radio" name="export-format" value="html"> <span data-i18n="exportHtml">HTML</span></label>
+                    <label><input type="radio" name="export-format" value="xml"> <span data-i18n="exportXml">XML</span></label>
+                    <label><input type="radio" name="export-format" value="csv"> <span data-i18n="exportCsv">CSV</span></label>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-primary" id="export-confirm" data-i18n="export">Export</button>
+            </div>
+        </div>
+    </div>
 <?php endif; ?>
 
     <div class="toast-wrap" aria-live="polite"></div>
@@ -146,6 +175,7 @@ $lang = $settings['language'] === 'cs' ? 'cs' : 'en';
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
     <script src="<?= e(asset_url('js/kanban.js')) ?>"></script>
+    <script src="<?= e(asset_url('js/export.js')) ?>"></script>
     <script src="<?= e(asset_url('js/ai.js')) ?>"></script>
 <?php endif; ?>
     <script src="<?= e(asset_url('js/app.js')) ?>"></script>

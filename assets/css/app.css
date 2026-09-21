@@ -135,6 +135,16 @@ a {
     flex: 1;
 }
 
+.export-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.export-actions-menu {
+    display: none;
+}
+
 .nav-toggle,
 .icon-btn,
 .btn {
@@ -583,6 +593,30 @@ a {
     text-align: center;
 }
 
+@media (min-width: 2560px) {
+    .card-actions {
+        gap: 5px;
+    }
+
+    .card-actions .icon-btn {
+        min-height: 31px;
+        min-width: 38px;
+        padding: 0 10px;
+        font-size: 0.647rem;
+    }
+
+    .card-move-select {
+        height: 31px;
+        min-height: 31px;
+        max-height: 31px;
+        padding: 0 23px 0 10px;
+        font-size: 0.647rem;
+        line-height: 29px;
+        background-position: right 8px center;
+        background-size: 9px 6px;
+    }
+}
+
 .recycle {
     display: none;
     flex: 1;
@@ -799,6 +833,37 @@ a {
     padding: 12px;
 }
 
+.export-format-hint {
+    margin: 0 0 12px;
+    color: var(--muted);
+}
+
+.export-formats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.export-formats label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 0 6px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.export-formats label:hover {
+    background: var(--surface-2);
+}
+
+.export-formats input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+}
+
 .field {
     display: flex;
     flex-direction: column;
@@ -1007,6 +1072,16 @@ a {
 
     .header.menu-open .nav-actions {
         display: flex;
+    }
+
+    .export-actions-bar {
+        display: none;
+    }
+
+    .export-actions-menu {
+        display: flex;
+        width: 100%;
+        flex-wrap: wrap;
     }
 
     .user-chip {

@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedPinned = Number(window.APP_SETTINGS?.ai_sidebar_pinned) === 1;
         aiChat.applyPinned(desktop.matches ? savedPinned : false);
         Promise.all([kanban.init(), aiChat.init()]).catch(() => {});
+        exporter.init();
     }
 });
 

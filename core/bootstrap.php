@@ -24,6 +24,7 @@ require_once __DIR__ . '/RateLimiter.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/History.php';
 require_once __DIR__ . '/Cards.php';
+require_once __DIR__ . '/Export.php';
 require_once __DIR__ . '/Mailer.php';
 require_once __DIR__ . '/HtmlSanitizer.php';
 require_once __DIR__ . '/OpenAI.php';
