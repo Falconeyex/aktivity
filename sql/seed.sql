@@ -1,0 +1,9 @@
+-- Dummy cards and the test account are created by PHP so the password
+-- is hashed with PASSWORD_ARGON2ID at install time.
+--
+-- After importing schema.sql, open seed.php once in a browser
+-- (or run: php seed.php).
+--
+-- Test account created by seed.php:
+--   falconeyex@gmail.com
+--   Ferdicek2026*

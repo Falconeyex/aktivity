@@ -1,0 +1,12 @@
+{
+    "name": "microview/aktivity",
+    "description": "AKTIVITY Kanban board",
+    "require": {
+        "php": ">=8.1",
+        "phpmailer/phpmailer": "^6.9",
+        "ezyang/htmlpurifier": "^4.17"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

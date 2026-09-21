@@ -1,0 +1,322 @@
+const COLUMNS = ['backlog', 'todo', 'in_progress', 'review', 'done', 'postponed'];
+
+const kanban = {
+    cards: [],
+    bin: [],
+    selected: new Set(),
+    view: 'board',
+    editor: null,
+    quill: null,
+    sortables: [],
+
+    async init() {
+        this.bindUi();
+        await this.reload();
+    },
+
+    bindUi() {
+        document.getElementById('btn-board')?.addEventListener('click', () => this.setView('board'));
+        document.getElementById('btn-recycle')?.addEventListener('click', () => this.setView('recycle'));
+        document.getElementById('btn-add-all')?.addEventListener('click', () => aiChat.addAll());
+        document.getElementById('btn-add-selected')?.addEventListener('click', () => aiChat.addSelected([...this.selected]));
+        document.getElementById('editor-save')?.addEventListener('click', () => this.saveEditor());
+        document.getElementById('editor-cancel')?.addEventListener('click', () => this.closeModal('modal-editor'));
+        document.getElementById('history-close')?.addEventListener('click', () => this.closeModal('modal-history'));
+    },
+
+    setView(view) {
+        this.view = view;
+        document.querySelector('.app')?.classList.toggle('view-recycle', view === 'recycle');
+        if (view === 'recycle') {
+            this.loadBin();
+        }
+    },
+
+    async reload() {
+        const data = await api.get('cards.php');
+        this.cards = data.cards || [];
+        this.renderBoard();
+        if (this.view === 'recycle') {
+            await this.loadBin();
+        }
+    },
+
+    async loadBin() {
+        const data = await api.get('cards.php?deleted=1');
+        this.bin = data.cards || [];
+        this.renderBin();
+    },
+
+    renderBoard() {
+        const board = document.getElementById('board');
+        if (!board) return;
+        board.innerHTML = '';
+        COLUMNS.forEach((col) => {
+            const items = this.cards.filter((c) => c.status_column === col);
+            const el = document.createElement('section');
+            el.className = 'column';
+            el.dataset.column = col;
+            el.innerHTML = `
+                <div class="column-head">
+                    <div>
+                        <h2 class="column-title" data-i18n="col_${col}">${t('col_' + col)}</h2>
+                        <div class="column-count">${items.length}</div>
+                    </div>
+                    <div class="column-actions">
+                        <button type="button" class="icon-btn" data-add="${col}">+</button>
+                        <button type="button" class="icon-btn" data-col-chat="${col}" title="${t('addColumnChat')}">AI</button>
+                    </div>
+                </div>
+                <div class="column-body" data-col-body="${col}"></div>
+            `;
+            const body = el.querySelector('.column-body');
+            items.forEach((card) => body.appendChild(this.cardEl(card)));
+            el.querySelector('[data-add]').addEventListener('click', () => this.openEditor({ status_column: col }));
+            el.querySelector('[data-col-chat]').addEventListener('click', () => aiChat.addColumn(col));
+            board.appendChild(el);
+        });
+        this.bindSortables();
+    },
+
+    cardEl(card) {
+        const el = document.createElement('article');
+        el.className = 'card' + (this.selected.has(Number(card.id)) ? ' selected' : '');
+        el.dataset.id = String(card.id);
+        const created = `${t('created')}: ${card.created_at}`;
+        el.innerHTML = `
+            <div class="card-top">
+                <input type="checkbox" class="card-select" ${this.selected.has(Number(card.id)) ? 'checked' : ''} aria-label="select">
+                <span class="card-handle" title="Drag">⋮⋮</span>
+                <h3 class="card-title"></h3>
+            </div>
+            <div class="card-body ql-snow"><div class="ql-editor"></div></div>
+            <div class="card-meta">
+                <div class="card-sub"></div>
+                <label class="card-move">
+                    <select class="card-move-select" aria-label="${t('moveTo')}"></select>
+                </label>
+            </div>
+            <div class="card-actions">
+                <button type="button" class="icon-btn" data-act="edit">${t('edit')}</button>
+                <button type="button" class="icon-btn" data-act="history">${t('history')}</button>
+                <button type="button" class="icon-btn" data-act="ai">${t('addToChat')}</button>
+                <button type="button" class="icon-btn" data-act="delete">${t('recycle')}</button>
+            </div>
+        `;
+        el.querySelector('.card-title').textContent = card.title;
+        el.querySelector('.card-body .ql-editor').innerHTML = card.body || '';
+        el.querySelector('.card-sub').textContent = created;
+        const moveSelect = el.querySelector('.card-move-select');
+        COLUMNS.forEach((col) => {
+            const opt = document.createElement('option');
+            opt.value = col;
+            opt.textContent = t('col_' + col);
+            if (col === card.status_column) opt.selected = true;
+            moveSelect.appendChild(opt);
+        });
+        moveSelect.addEventListener('click', (e) => e.stopPropagation());
+        moveSelect.addEventListener('mousedown', (e) => e.stopPropagation());
+        moveSelect.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+        moveSelect.addEventListener('change', (e) => {
+            e.stopPropagation();
+            this.moveToColumn(card.id, moveSelect.value);
+        });
+        el.querySelector('.card-select').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleSelect(Number(card.id));
+        });
+        el.querySelector('[data-act="edit"]').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openEditor(card);
+        });
+        el.querySelector('[data-act="history"]').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openHistory(card.id);
+        });
+        el.querySelector('[data-act="ai"]').addEventListener('click', (e) => {
+            e.stopPropagation();
+            aiChat.addCards([card.id]);
+        });
+        el.querySelector('[data-act="delete"]').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.remove(card.id);
+        });
+        el.addEventListener('dblclick', () => this.openEditor(card));
+        return el;
+    },
+
+    toggleSelect(id) {
+        if (this.selected.has(id)) this.selected.delete(id);
+        else this.selected.add(id);
+        this.renderBoard();
+    },
+
+    bindSortables() {
+        this.sortables.forEach((s) => s.destroy());
+        this.sortables = [];
+        if (typeof Sortable === 'undefined') return;
+        document.querySelectorAll('[data-col-body]').forEach((body) => {
+            this.sortables.push(new Sortable(body, {
+                group: 'kanban',
+                handle: '.card-handle',
+                animation: 150,
+                delay: 180,
+                delayOnTouchOnly: true,
+                ghostClass: 'sortable-ghost',
+                onEnd: () => this.persistOrder(),
+            }));
+        });
+    },
+
+    async moveToColumn(cardId, column) {
+        const card = this.cards.find((c) => Number(c.id) === Number(cardId));
+        if (!card || card.status_column === column || !COLUMNS.includes(column)) {
+            return;
+        }
+        const destCount = this.cards.filter((c) => c.status_column === column).length;
+        try {
+            const data = await api.post('cards_move.php', {
+                items: [{
+                    id: Number(cardId),
+                    status_column: column,
+                    order_index: destCount,
+                }],
+            });
+            this.cards = data.cards || this.cards;
+            toast.ok(`${t('cardMoved')}: ${t('col_' + column)}`);
+            this.renderBoard();
+        } catch (e) {
+            this.renderBoard();
+        }
+    },
+
+    async persistOrder() {
+        const items = [];
+        document.querySelectorAll('[data-col-body]').forEach((body) => {
+            const column = body.dataset.colBody;
+            [...body.querySelectorAll('.card')].forEach((card, index) => {
+                items.push({
+                    id: Number(card.dataset.id),
+                    status_column: column,
+                    order_index: index,
+                });
+            });
+        });
+        const data = await api.post('cards_move.php', { items });
+        this.cards = data.cards || this.cards;
+        this.renderBoard();
+    },
+
+    openEditor(card) {
+        this.editor = card || { status_column: 'backlog' };
+        const modal = document.getElementById('modal-editor');
+        document.getElementById('editor-title').value = card?.title || '';
+        this.ensureQuill();
+        this.quill.root.innerHTML = card?.body || '';
+        modal.classList.add('open');
+        document.getElementById('editor-title').focus();
+    },
+
+    ensureQuill() {
+        if (this.quill || typeof Quill === 'undefined') {
+            return;
+        }
+        this.quill = new Quill('#editor-quill', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ header: [1, 2, 3, false] }],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['link'],
+                    ['clean'],
+                ],
+            },
+        });
+    },
+
+    closeModal(id) {
+        document.getElementById(id)?.classList.remove('open');
+    },
+
+    async saveEditor() {
+        const title = document.getElementById('editor-title').value.trim();
+        const body = this.quill ? this.quill.root.innerHTML : '';
+        if (this.editor?.id) {
+            await api.post('cards_update.php', { id: this.editor.id, title, body });
+        } else {
+            await api.post('cards_create.php', {
+                title,
+                body,
+                status_column: this.editor.status_column || 'backlog',
+            });
+        }
+        toast.ok(t('saved'));
+        this.closeModal('modal-editor');
+        await this.reload();
+    },
+
+    async openHistory(id) {
+        const data = await api.get(`cards_history.php?id=${encodeURIComponent(id)}`);
+        const box = document.getElementById('history-list');
+        const rows = data.history || [];
+        if (!rows.length) {
+            box.innerHTML = `<p>${t('historyEmpty')}</p>`;
+        } else {
+            box.innerHTML = rows.map((row) => {
+                const prev = row.previous_state?.status_column || '';
+                const next = row.new_state?.status_column || '';
+                const move = (prev || next) ? ` (${prev} → ${next})` : '';
+                return `<article class="history-item">
+                    <strong>${t('action_' + row.action_type)}${move}</strong>
+                    <time>${row.timestamp}</time>
+                </article>`;
+            }).join('');
+        }
+        document.getElementById('modal-history').classList.add('open');
+    },
+
+    async remove(id) {
+        await api.post('cards_delete.php', { id });
+        this.selected.delete(Number(id));
+        toast.ok(t('movedBin'));
+        await this.reload();
+    },
+
+    renderBin() {
+        const box = document.getElementById('recycle-list');
+        if (!box) return;
+        if (!this.bin.length) {
+            box.innerHTML = `<p>${t('emptyBin')}</p>`;
+            return;
+        }
+        box.innerHTML = '';
+        this.bin.forEach((card) => {
+            const el = document.createElement('article');
+            el.className = 'recycle-item';
+            el.innerHTML = `
+                <div>
+                    <strong></strong>
+                    <div class="recycle-meta"></div>
+                </div>
+                <div class="card-actions">
+                    <button type="button" class="btn btn-soft" data-act="restore">${t('restore')}</button>
+                    <button type="button" class="btn btn-danger" data-act="purge">${t('purge')}</button>
+                </div>
+            `;
+            el.querySelector('strong').textContent = card.title;
+            el.querySelector('.recycle-meta').textContent = `${t('col_' + card.status_column)} · ${card.deleted_at}`;
+            el.querySelector('[data-act="restore"]').addEventListener('click', async () => {
+                await api.post('cards_restore.php', { id: card.id });
+                toast.ok(t('restored'));
+                await this.reload();
+            });
+            el.querySelector('[data-act="purge"]').addEventListener('click', async () => {
+                await api.post('cards_purge.php', { id: card.id });
+                toast.ok(t('purged'));
+                await this.reload();
+            });
+            box.appendChild(el);
+        });
+    },
+};

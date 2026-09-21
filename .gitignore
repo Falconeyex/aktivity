@@ -1,0 +1,11 @@
+/config.php
+/vendor/
+/.tools/
+/composer.phar
+/composer.phar.sha256sum
+/cache/htmlpurifier/*
+!/cache/htmlpurifier/.gitkeep
+composer.lock
+.DS_Store
+Thumbs.db
+*.log

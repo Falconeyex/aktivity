@@ -1,0 +1,27 @@
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+    <Files "config.php">
+        Require all denied
+    </Files>
+    <Files "composer.json">
+        Require all denied
+    </Files>
+    <Files "composer.lock">
+        Require all denied
+    </Files>
+    <Files "agents.md">
+        Require all denied
+    </Files>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(sql|core|cache|vendor)(/|$) - [F,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
