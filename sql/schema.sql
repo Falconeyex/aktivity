@@ -27,6 +27,7 @@ CREATE TABLE user_settings (
     language ENUM('cs', 'en') NOT NULL DEFAULT 'en',
     theme ENUM('light', 'dark') NOT NULL DEFAULT 'light',
     ai_sidebar_pinned TINYINT(1) NOT NULL DEFAULT 1,
+    hidden_columns VARCHAR(255) NOT NULL DEFAULT '[]',
     PRIMARY KEY (user_id),
     CONSTRAINT fk_settings_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

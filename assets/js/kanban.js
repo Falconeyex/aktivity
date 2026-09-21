@@ -19,6 +19,15 @@ const kanban = {
         document.getElementById('btn-recycle')?.addEventListener('click', () => this.setView('recycle'));
         document.getElementById('btn-add-all')?.addEventListener('click', () => aiChat.addAll());
         document.getElementById('btn-add-selected')?.addEventListener('click', () => aiChat.addSelected([...this.selected]));
+        document.getElementById('btn-columns')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleColumnsPanel();
+        });
+        document.getElementById('columns-panel')?.addEventListener('click', (e) => e.stopPropagation());
+        document.addEventListener('click', () => this.closeColumnsPanel());
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this.closeColumnsPanel();
+        });
         document.getElementById('editor-save')?.addEventListener('click', () => this.saveEditor());
         document.getElementById('editor-cancel')?.addEventListener('click', () => this.closeModal('modal-editor'));
         document.getElementById('history-close')?.addEventListener('click', () => this.closeModal('modal-history'));
@@ -47,24 +56,99 @@ const kanban = {
         this.renderBin();
     },
 
+    hiddenColumns() {
+        const list = window.APP_SETTINGS?.hidden_columns;
+        return Array.isArray(list) ? list.filter((col) => COLUMNS.includes(col)) : [];
+    },
+
+    visibleColumns() {
+        const hidden = new Set(this.hiddenColumns());
+        return COLUMNS.filter((col) => !hidden.has(col));
+    },
+
+    toggleColumnsPanel() {
+        const panel = document.getElementById('columns-panel');
+        if (!panel) return;
+        const open = panel.classList.contains('hidden');
+        panel.classList.toggle('hidden', !open);
+        document.getElementById('btn-columns')?.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) this.renderColumnPanel();
+    },
+
+    closeColumnsPanel() {
+        document.getElementById('columns-panel')?.classList.add('hidden');
+        document.getElementById('btn-columns')?.setAttribute('aria-expanded', 'false');
+    },
+
+    renderColumnPanel() {
+        const list = document.getElementById('columns-panel-list');
+        if (!list) return;
+        const hidden = new Set(this.hiddenColumns());
+        list.innerHTML = '';
+        COLUMNS.forEach((col) => {
+            const row = document.createElement('label');
+            row.className = 'columns-panel-row';
+            const box = document.createElement('input');
+            box.type = 'checkbox';
+            box.checked = !hidden.has(col);
+            box.addEventListener('change', () => this.setColumnHidden(col, !box.checked));
+            const name = document.createElement('span');
+            name.textContent = t('col_' + col);
+            row.appendChild(box);
+            row.appendChild(name);
+            list.appendChild(row);
+        });
+        this.syncColumnsButton();
+    },
+
+    async setColumnHidden(col, hide) {
+        if (!COLUMNS.includes(col)) return;
+        let hidden = this.hiddenColumns();
+        if (hide) {
+            if (!hidden.includes(col)) hidden = [...hidden, col];
+            if (hidden.length >= COLUMNS.length) {
+                toast.error(t('keepOneColumn'));
+                this.renderColumnPanel();
+                return;
+            }
+        } else {
+            hidden = hidden.filter((item) => item !== col);
+        }
+        try {
+            const data = await api.post('settings.php', { hidden_columns: hidden });
+            if (window.APP_SETTINGS) {
+                window.APP_SETTINGS.hidden_columns = data.settings.hidden_columns || hidden;
+            }
+        } catch (e) {
+            this.renderColumnPanel();
+            return;
+        }
+        this.renderBoard();
+        this.renderColumnPanel();
+        this.syncColumnsButton();
+    },
+
     renderBoard() {
         const board = document.getElementById('board');
         if (!board) return;
+        const visible = this.visibleColumns();
         board.innerHTML = '';
-        COLUMNS.forEach((col) => {
+        board.dataset.visibleCount = String(visible.length);
+        visible.forEach((col) => {
             const items = this.cards.filter((c) => c.status_column === col);
             const el = document.createElement('section');
             el.className = 'column';
             el.dataset.column = col;
             el.innerHTML = `
                 <div class="column-head">
-                    <div>
+                    <div class="column-label">
                         <h2 class="column-title" data-i18n="col_${col}">${t('col_' + col)}</h2>
                         <div class="column-count">${items.length}</div>
                     </div>
                     <div class="column-actions">
-                        <button type="button" class="icon-btn" data-add="${col}">+</button>
+                        <button type="button" class="icon-btn" data-add="${col}" title="${t('addCard')}">+</button>
                         <button type="button" class="icon-btn" data-col-chat="${col}" title="${t('addColumnChat')}">AI</button>
+                        <button type="button" class="icon-btn column-hide" data-hide="${col}" title="${t('hide')}" aria-label="${t('hide')}" ${visible.length <= 1 ? 'disabled' : ''}>X</button>
                     </div>
                 </div>
                 <div class="column-body" data-col-body="${col}"></div>
@@ -73,9 +157,19 @@ const kanban = {
             items.forEach((card) => body.appendChild(this.cardEl(card)));
             el.querySelector('[data-add]').addEventListener('click', () => this.openEditor({ status_column: col }));
             el.querySelector('[data-col-chat]').addEventListener('click', () => aiChat.addColumn(col));
+            el.querySelector('[data-hide]').addEventListener('click', () => this.setColumnHidden(col, true));
             board.appendChild(el);
         });
         this.bindSortables();
+        this.syncColumnsButton();
+    },
+
+    syncColumnsButton() {
+        const btn = document.getElementById('btn-columns');
+        if (!btn) return;
+        const hidden = this.hiddenColumns().length;
+        btn.textContent = hidden ? `${t('columns')} (${hidden})` : t('columns');
+        btn.classList.toggle('has-hidden', hidden > 0);
     },
 
     cardEl(card) {

@@ -60,6 +60,13 @@ $lang = $settings['language'] === 'cs' ? 'cs' : 'en';
             <nav class="nav-actions">
                 <button type="button" class="btn" id="btn-board" data-i18n="board">Board</button>
                 <button type="button" class="btn" id="btn-recycle" data-i18n="recycle">Recycle bin</button>
+                <div class="columns-menu">
+                    <button type="button" class="btn" id="btn-columns" data-i18n="columns" aria-haspopup="true" aria-expanded="false">Columns</button>
+                    <div class="columns-panel hidden" id="columns-panel" role="menu">
+                        <p class="columns-panel-hint" data-i18n="columnsHint">Hidden columns keep their cards. Show them again here.</p>
+                        <div id="columns-panel-list"></div>
+                    </div>
+                </div>
                 <button type="button" class="btn" id="btn-add-all" data-i18n="addAllChat">Add all to chat</button>
                 <button type="button" class="btn" id="btn-add-selected" data-i18n="addSelectedChat">Add selected to chat</button>
                 <button type="button" class="btn" id="btn-theme">

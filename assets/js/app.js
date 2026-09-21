@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setLang(next);
         if (document.getElementById('board')) {
             kanban.renderBoard();
+            kanban.renderColumnPanel();
             if (kanban.view === 'recycle') kanban.renderBin();
         }
         try {

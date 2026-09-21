@@ -87,15 +87,16 @@ You can run the same `composer install` locally if you want those libraries whil
 
 1. Create a MariaDB database and user in Active24.
 2. Import [sql/schema.sql](sql/schema.sql) only. Do not run any legacy schema.
-3. Open `https://www.microview.cz/aktivity/seed.php` once. It creates:
+3. If the database already exists from an earlier AKTIVITY install, also run [sql/migrate_hidden_columns.sql](sql/migrate_hidden_columns.sql) once so column visibility can be saved.
+4. Open `https://www.microview.cz/aktivity/seed.php` once. It creates:
 
    - user `falconeyex@gmail.com`
    - password hashed with Argon2id (`Ferdicek2026*`)
    - 20 dummy cards
    - default settings (English, light theme, AI sidebar pinned)
 
-4. If any user already exists, seed.php does nothing.
-5. Delete `seed.php` from the server after a successful seed.
+5. If any user already exists, seed.php does nothing.
+6. Delete `seed.php` from the server after a successful seed.
 
 ## 6. Permissions
 
@@ -119,7 +120,8 @@ Use the Active24 SSL certificate. Session cookies are `HttpOnly`, `Secure`, and 
 5. Switch theme and Czech/English; reload to confirm persistence.
 6. Request a password reset and confirm the 10-minute link to `/aktivity/reset_pw.php`.
 7. Pin/unpin the AI sidebar (split on desktop, overlay on tablet/phone).
-8. Check phone (~390px), tablet (~768px), and desktop (~1440px).
+8. Hide a column with Hide / Skrýt; remaining columns should grow equally. Restore it from Columns in the header.
+9. Check phone (~390px), tablet (~768px), and desktop (~1440px).
 
 ## 9. Local development
 

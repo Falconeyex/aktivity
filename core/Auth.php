@@ -24,20 +24,54 @@ final class Auth
             'language' => 'en',
             'theme' => 'light',
             'ai_sidebar_pinned' => 1,
+            'hidden_columns' => [],
         ];
         if ($id < 1) {
             return $defaults;
         }
-        $stmt = Database::pdo()->prepare(
-            'SELECT language, theme, ai_sidebar_pinned FROM user_settings WHERE user_id = ? LIMIT 1'
-        );
-        $stmt->execute([$id]);
-        $row = $stmt->fetch();
+        try {
+            $stmt = Database::pdo()->prepare(
+                'SELECT language, theme, ai_sidebar_pinned, hidden_columns FROM user_settings WHERE user_id = ? LIMIT 1'
+            );
+            $stmt->execute([$id]);
+            $row = $stmt->fetch();
+        } catch (PDOException $e) {
+            $stmt = Database::pdo()->prepare(
+                'SELECT language, theme, ai_sidebar_pinned FROM user_settings WHERE user_id = ? LIMIT 1'
+            );
+            $stmt->execute([$id]);
+            $row = $stmt->fetch();
+            if ($row) {
+                $row['hidden_columns'] = '[]';
+            }
+        }
         if (!$row) {
             return $defaults;
         }
         $row['ai_sidebar_pinned'] = (int) $row['ai_sidebar_pinned'];
+        $row['hidden_columns'] = self::normalizeHiddenColumns($row['hidden_columns'] ?? []);
         return $row;
+    }
+
+    public static function normalizeHiddenColumns(mixed $raw): array
+    {
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $col) {
+            $col = (string) $col;
+            if (is_valid_column($col) && !in_array($col, $out, true)) {
+                $out[] = $col;
+            }
+        }
+        if (count($out) >= count(card_columns())) {
+            array_pop($out);
+        }
+        return $out;
     }
 
     public static function login(int $userId): void
